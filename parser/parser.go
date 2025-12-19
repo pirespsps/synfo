@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 
+	"github.com/pirespsps/synfo/model"
 	"github.com/shirou/gopsutil/v4/cpu"
 )
 
@@ -62,5 +63,6 @@ func cpuInfo(isJSON bool) (any, error) {
 func hardwareInfo(isJson bool) (any, error) {
 
 	//call from hardware
+	return model.GetAll()
 	return nil, nil
 }

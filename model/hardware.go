@@ -9,27 +9,102 @@ import (
 	"strings"
 )
 
-type Hinfo struct {
+type StorageUnit struct {
+	Name string `json:"name"` //disk name
+	Type string `json:"type"` //disk type
+	Size string `json:"size"` //disk size
+}
+
+type hinfo struct {
 	OS          string  `json:"os"`          //OS name
 	OSVersion   string  `json:"osVersion"`   //OS version
 	Kernel      string  `json:"kernel"`      //kernel release
 	RAM         float64 `json:"ram"`         //total RAM available
 	MotherBoard string  `json:"motherboard"` //motheboard name
+	GraphicCard string  `json:"graphics"`    //graphic cards name
 	CPU         struct {
 		Name  string             `json:"name"`  //name of the CPU
 		Cores int                `json:"cores"` //physical cores count
 		Arq   string             `json:"arq"`   //architecture
 		Cache map[string]float32 `json:"cache"` //caches sizes
 	}
-	Storage struct {
-		Name     string  `json:"name"`     //disk name
-		Type     string  `json:"type"`     //disk type
-		Capacity float32 `json:"capacity"` //disk size
-	}
+	Storage []StorageUnit
 }
 
-func GetAll() {
+func GetAll() (hinfo, error) {
+	var data hinfo
+	var err error
 
+	data.OS, data.OSVersion, err = OsData()
+	if err != nil {
+		return data, fmt.Errorf("error in osData: %v", err)
+	}
+
+	data.Kernel, err = KernelName()
+	if err != nil {
+		return data, fmt.Errorf("error in kernel name: %v", err)
+	}
+
+	data.RAM, err = RAMsize()
+	if err != nil {
+		return data, fmt.Errorf("error in ram size: %v", err)
+	}
+
+	data.MotherBoard, err = MotherBoardName()
+	if err != nil {
+		return data, fmt.Errorf("error in motherboard: %v", err)
+	}
+
+	data.Storage, err = StorageData()
+	if err != nil {
+		return data, fmt.Errorf("error in storage data: %v", err)
+	}
+
+	return data, nil
+
+}
+
+func CpuData() (any, error) {
+
+	//cpuData := struct {
+	//	Lscpu []struct {
+	//	}
+	//}{}
+
+	return nil, nil
+}
+
+func GraphicsData() (string, error) {
+
+	return "", nil
+}
+
+func StorageData() ([]StorageUnit, error) {
+
+	disks := struct {
+		BlockDevices []StorageUnit `json:"blockdevices"`
+	}{}
+
+	data, err := exec.Command("lsblk", "-J").Output()
+	if err != nil {
+		return nil, fmt.Errorf("error in lsblk: %v", err)
+	}
+
+	err = json.Unmarshal(data, &disks)
+	if err != nil {
+		return nil, fmt.Errorf("error in unmarshal: %v", err)
+	}
+
+	return disks.BlockDevices, nil
+}
+
+func MotherBoardName() (string, error) {
+	name, err := exec.Command("cat", "/sys/devices/virtual/dmi/id/board_name").Output()
+	if err != nil {
+		return "", fmt.Errorf("error in cat board_name: %v", err)
+	}
+
+	return string(name), nil
 }
 
 func OsData() (name string, release string, err error) {
@@ -87,10 +162,11 @@ func RAMsize() (float64, error) {
 	}
 
 	var totalSize float64
+	r := regexp.MustCompile(`[^0-9,]`)
 
 	for _, v := range mems.Memory {
-		mem := strings.ReplaceAll(v.Size, "G", "")
-		mem = strings.ReplaceAll(mem, ",", ".")
+		str := r.ReplaceAll([]byte(v.Size), []byte(""))
+		mem := strings.ReplaceAll(string(str), ",", ".")
 
 		fmem, err := strconv.ParseFloat(mem, 64)
 		if err != nil {
