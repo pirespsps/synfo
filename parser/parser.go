@@ -63,6 +63,6 @@ func cpuInfo(isJSON bool) (any, error) {
 func hardwareInfo(isJson bool) (any, error) {
 
 	//call from hardware
-	return model.CpuData()
+	return model.GetArchitecture()
 	return nil, nil
 }

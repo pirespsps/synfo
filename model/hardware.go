@@ -116,7 +116,7 @@ func StorageData() ([]StorageUnit, error) {
 	return disks.BlockDevices, nil
 }
 
-func MotherBoardName() (string, error) {
+func MotherBoardName() (string, error) { //ler com reader
 	name, err := exec.Command("cat", "/sys/devices/virtual/dmi/id/board_name").Output()
 	if err != nil {
 		return "", fmt.Errorf("error in cat board_name: %v", err)
@@ -125,7 +125,7 @@ func MotherBoardName() (string, error) {
 	return string(name), nil
 }
 
-func OsData() (name string, release string, err error) {
+func OsData() (name string, release string, err error) { //ler com reader
 
 	data, err := exec.Command("lsb_release", "-a").Output()
 	if err != nil {
