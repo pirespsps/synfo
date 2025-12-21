@@ -15,20 +15,22 @@ type StorageUnit struct {
 	Size string `json:"size"` //disk size
 }
 
+type CpuInfo struct {
+	Name  string             `json:"name"`  //name of the CPU
+	Cores int                `json:"cores"` //physical cores count
+	Arq   string             `json:"arq"`   //architecture
+	Cache map[string]float32 `json:"cache"` //caches sizes
+}
+
 type hinfo struct {
-	OS          string  `json:"os"`          //OS name
-	OSVersion   string  `json:"osVersion"`   //OS version
-	Kernel      string  `json:"kernel"`      //kernel release
-	RAM         float64 `json:"ram"`         //total RAM available
-	MotherBoard string  `json:"motherboard"` //motheboard name
-	GraphicCard string  `json:"graphics"`    //graphic cards name
-	CPU         struct {
-		Name  string             `json:"name"`  //name of the CPU
-		Cores int                `json:"cores"` //physical cores count
-		Arq   string             `json:"arq"`   //architecture
-		Cache map[string]float32 `json:"cache"` //caches sizes
-	}
-	Storage []StorageUnit
+	OS          string        `json:"os"`          //OS name
+	OSVersion   string        `json:"osVersion"`   //OS version
+	Kernel      string        `json:"kernel"`      //kernel release
+	RAM         float64       `json:"ram"`         //total RAM available
+	MotherBoard string        `json:"motherboard"` //motheboard name
+	GraphicCard string        `json:"graphics"`    //graphic cards name
+	CPU         CpuInfo       `json:"cpu"`
+	Storage     []StorageUnit `json:"storage"`
 }
 
 func GetAll() (hinfo, error) {
@@ -66,12 +68,28 @@ func GetAll() (hinfo, error) {
 
 func CpuData() (any, error) {
 
-	//cpuData := struct {
-	//	Lscpu []struct {
-	//	}
-	//}{}
+	//"LC_ALL=C"
+	data, err := exec.Command("lscpu", "-J").Output()
+	if err != nil {
+		return nil, fmt.Errorf("error in lscpu: %v", err)
+	}
 
-	return nil, nil
+	resp := struct {
+		Data []struct {
+			Info     string `json:"data"`
+			Children []struct {
+				Field string `json:"field"`
+				Data  string `json:"data"`
+			} `json:"children"`
+		} `json:"lscpu"`
+	}{}
+
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("error in unrmarshal cpu: %v", err)
+	}
+
+	return resp, nil
 }
 
 func GraphicsData() (string, error) {
