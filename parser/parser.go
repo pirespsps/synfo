@@ -21,7 +21,7 @@ func FetchData(option string, isJSON bool) (any, error) {
 
 	case "storage":
 
-	case "process":
+	case "process": //fazer programa separado
 
 	case "hardware":
 		return hardwareInfo(isJSON)
@@ -63,6 +63,6 @@ func cpuInfo(isJSON bool) (any, error) {
 func hardwareInfo(isJson bool) (any, error) {
 
 	//call from hardware
-	return model.GetArchitecture()
+	return model.GetCPUmodel()
 	return nil, nil
 }

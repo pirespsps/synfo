@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -66,32 +67,6 @@ func GetAll() (hinfo, error) {
 
 }
 
-func CpuData() (any, error) {
-
-	//"LC_ALL=C"
-	data, err := exec.Command("lscpu", "-J").Output()
-	if err != nil {
-		return nil, fmt.Errorf("error in lscpu: %v", err)
-	}
-
-	resp := struct {
-		Data []struct {
-			Info     string `json:"data"`
-			Children []struct {
-				Field string `json:"field"`
-				Data  string `json:"data"`
-			} `json:"children"`
-		} `json:"lscpu"`
-	}{}
-
-	err = json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, fmt.Errorf("error in unrmarshal cpu: %v", err)
-	}
-
-	return resp, nil
-}
-
 func GraphicsData() (string, error) {
 
 	return "", nil
@@ -117,12 +92,13 @@ func StorageData() ([]StorageUnit, error) {
 }
 
 func MotherBoardName() (string, error) { //ler com reader
-	name, err := exec.Command("cat", "/sys/devices/virtual/dmi/id/board_name").Output()
+
+	data, err := os.ReadFile("/sys/devices/virtual/dmi/id/board_name")
 	if err != nil {
-		return "", fmt.Errorf("error in cat board_name: %v", err)
+		return "", fmt.Errorf("error in reading board_name: %v", err)
 	}
 
-	return string(name), nil
+	return string(data), nil
 }
 
 func OsData() (name string, release string, err error) { //ler com reader

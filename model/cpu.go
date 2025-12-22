@@ -2,20 +2,33 @@ package model
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 )
 
 //structs
 
-func GetCPUmodel() (string, error) { //ler com reader
-	cmd := "cat /proc/cpuinfo | egrep '^model name' | uniq | awk '{print substr($0, index($0,$4))}'"
-	data, err := exec.Command("bash", "-c", cmd).Output()
+func GetCPUmodel() (string, error) {
+
+	data, err := os.ReadFile("/proc/cpuinfo")
 	if err != nil {
-		return "", fmt.Errorf("cat model name failed: %s", cmd)
+		return "", fmt.Errorf("error in reading /proc/cpuinfo: %v", err)
 	}
-	return string(data), nil
+
+	r := regexp.MustCompile(`model name ?[\s]+:\s`)
+	var model string
+
+	for v := range strings.Lines(string(data)) {
+		if r.Match([]byte(v)) {
+			model = string(r.ReplaceAll([]byte(v), []byte("")))
+			break
+		}
+	}
+
+	return model, nil
 }
 
 func GetCache() (map[string]string, error) {
@@ -39,14 +52,6 @@ func GetCores() int {
 	return runtime.NumCPU()
 }
 
-func GetArchitecture() (string, error) {
-	cmd := `LC_ALL=C lscpu | grep Architecture | awk {'print $2}`
-	data, err := exec.Command("bash", "-c", cmd).Output()
-	if err != nil {
-		return "", fmt.Errorf("error in lscpu grep Architecture: %v", err)
-	}
-
-	return string(data), nil
-
-	//return runtime.GOARCH,nil ?
+func GetArchitecture() string {
+	return runtime.GOARCH
 }
