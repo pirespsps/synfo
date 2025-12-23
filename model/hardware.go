@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,14 +15,7 @@ type StorageUnit struct {
 	Name string `json:"name"` //disk name
 	Type string `json:"type"` //disk type
 	Size string `json:"size"` //disk size
-}
-
-type CpuInfo struct {
-	Name  string             `json:"name"`  //name of the CPU
-	Cores int                `json:"cores"` //physical cores count
-	Arq   string             `json:"arq"`   //architecture
-	Cache map[string]float32 `json:"cache"` //caches sizes
-}
+} //muda para storage.go
 
 type hinfo struct {
 	OS          string        `json:"os"`          //OS name
@@ -30,11 +24,11 @@ type hinfo struct {
 	RAM         float64       `json:"ram"`         //total RAM available
 	MotherBoard string        `json:"motherboard"` //motheboard name
 	GraphicCard string        `json:"graphics"`    //graphic cards name
-	CPU         CpuInfo       `json:"cpu"`
-	Storage     []StorageUnit `json:"storage"`
-}
+	CPU         CpuOverall    `json:"cpu"`         //CPU info
+	Storage     []StorageUnit `json:"storage"`     //storage unit name+type+size
+} //muda o nome
 
-func GetAll() (hinfo, error) {
+func HardwareOverall() (hinfo, error) { //interface talvez?
 	var data hinfo
 	var err error
 
@@ -61,6 +55,11 @@ func GetAll() (hinfo, error) {
 	data.Storage, err = StorageData()
 	if err != nil {
 		return data, fmt.Errorf("error in storage data: %v", err)
+	}
+
+	data.CPU, err = CPUOverall()
+	if err != nil {
+		return data, fmt.Errorf("error in cpu overall: %v", err)
 	}
 
 	return data, nil
@@ -91,7 +90,7 @@ func StorageData() ([]StorageUnit, error) {
 	return disks.BlockDevices, nil
 }
 
-func MotherBoardName() (string, error) { //ler com reader
+func MotherBoardName() (string, error) {
 
 	data, err := os.ReadFile("/sys/devices/virtual/dmi/id/board_name")
 	if err != nil {
@@ -101,28 +100,23 @@ func MotherBoardName() (string, error) { //ler com reader
 	return string(data), nil
 }
 
-func OsData() (name string, release string, err error) { //ler com reader
+func OsData() (name string, release string, err error) {
 
-	data, err := exec.Command("lsb_release", "-a").Output()
+	data, err := os.ReadFile("/etc/os-release")
 	if err != nil {
-		return "", "", fmt.Errorf("error in lsb_release: %v", err)
+		return "", "", fmt.Errorf("error in reading /etc/os-release: %v", err)
 	}
 
-	for v := range strings.Lines(string(data)) {
+	rn := regexp.MustCompile(`PRETTY_NAME=`)
+	rv := regexp.MustCompile(`VERSION=`)
 
-		if strings.Contains(v, "Release") {
+	for v := range bytes.Lines(data) {
+		if rn.Match(v) {
+			name = string(rn.ReplaceAll(v, []byte("")))
 
-			r := regexp.MustCompile(`[a-zA-Z]+:[\s]+`)
-			release = string(r.ReplaceAll([]byte(v), []byte("")))
-			continue
-
-		} else if strings.Contains(v, "Description") {
-
-			r := regexp.MustCompile(`[a-zA-Z]+:[\s]+`)
-			name = string(r.ReplaceAll([]byte(v), []byte("")))
-
+		} else if rv.Match(v) {
+			release = string(rv.ReplaceAll(v, []byte("")))
 		}
-
 	}
 
 	return name, release, nil
