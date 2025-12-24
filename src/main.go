@@ -4,13 +4,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/pirespsps/synfo/parser"
 )
 
 func main() {
-	// args, with cpu, memory, network, all, etc.....
-	//arg with json input option
+	if runtime.GOOS != "linux" {
+		fmt.Print("Not in linux!")
+		os.Exit(1)
+	}
+
 	var isJson bool
 
 	flag.BoolVar(&isJson, "j", false, "Set the output to JSON format")

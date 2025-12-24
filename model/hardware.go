@@ -28,7 +28,7 @@ type hinfo struct {
 	Storage     []StorageUnit `json:"storage"`     //storage unit name+type+size
 } //muda o nome
 
-func HardwareOverall() (hinfo, error) { //interface talvez?
+func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SYSFS
 	var data hinfo
 	var err error
 
