@@ -11,21 +11,27 @@ import (
 	"strings"
 )
 
-type StorageUnit struct {
-	Name string `json:"name"` //disk name
-	Type string `json:"type"` //disk type
-	Size string `json:"size"` //disk size
-} //muda para storage.go
+type Hardware interface {
+	Overall() OverallData
+	Extensive() ExtensiveData
+}
+
+type OverallData struct {
+	Data map[string]string
+}
+
+type ExtensiveData struct {
+}
 
 type hinfo struct {
-	OS          string        `json:"os"`          //OS name
-	OSVersion   string        `json:"osVersion"`   //OS version
-	Kernel      string        `json:"kernel"`      //kernel release
-	RAM         float64       `json:"ram"`         //total RAM available
-	MotherBoard string        `json:"motherboard"` //motheboard name
-	GraphicCard string        `json:"graphics"`    //graphic cards name
-	CPU         CpuOverall    `json:"cpu"`         //CPU info
-	Storage     []StorageUnit `json:"storage"`     //storage unit name+type+size
+	OS          string     `json:"os"`          //OS name
+	OSVersion   string     `json:"osVersion"`   //OS version
+	Kernel      string     `json:"kernel"`      //kernel release
+	RAM         float64    `json:"ram"`         //total RAM available
+	MotherBoard string     `json:"motherboard"` //motheboard name
+	GraphicCard string     `json:"graphics"`    //graphic cards name
+	CPU         CpuOverall `json:"cpu"`         //CPU info
+	Storage     []Storage  `json:"storage"`     //storage unit name+type+size
 } //muda o nome
 
 func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SYSFS
@@ -52,10 +58,10 @@ func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SY
 		return data, fmt.Errorf("error in motherboard: %v", err)
 	}
 
-	data.Storage, err = StorageData()
-	if err != nil {
-		return data, fmt.Errorf("error in storage data: %v", err)
-	}
+	//data.Storage, err = StorageData()
+	//if err != nil {
+	//	return data, fmt.Errorf("error in storage data: %v", err)
+	//}
 
 	data.CPU, err = CPUOverall()
 	if err != nil {
@@ -69,25 +75,6 @@ func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SY
 func GraphicsData() (string, error) {
 
 	return "", nil
-}
-
-func StorageData() ([]StorageUnit, error) {
-
-	disks := struct {
-		BlockDevices []StorageUnit `json:"blockdevices"`
-	}{}
-
-	data, err := exec.Command("lsblk", "-J").Output()
-	if err != nil {
-		return nil, fmt.Errorf("error in lsblk: %v", err)
-	}
-
-	err = json.Unmarshal(data, &disks)
-	if err != nil {
-		return nil, fmt.Errorf("error in unmarshal: %v", err)
-	}
-
-	return disks.BlockDevices, nil
 }
 
 func MotherBoardName() (string, error) {
