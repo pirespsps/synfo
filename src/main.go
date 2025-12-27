@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -23,11 +24,18 @@ func main() {
 
 	option := os.Args[1]
 
-	data, err := parser.FetchData(option, isJson)
+	data, err := parser.FetchData(option)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Print(data)
-
+	if isJson {
+		js, err := json.Marshal(data)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Print(string(js))
+	} else {
+		fmt.Print(data)
+	}
 }

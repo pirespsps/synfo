@@ -12,15 +12,8 @@ import (
 )
 
 type Hardware interface {
-	Overall() OverallData
-	Extensive() ExtensiveData
-}
-
-type OverallData struct {
-	Data map[string]string
-}
-
-type ExtensiveData struct {
+	Overall() (any, error)
+	Extensive() (any, error)
 }
 
 type hinfo struct {

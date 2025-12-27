@@ -4,10 +4,9 @@ import (
 	"errors"
 
 	"github.com/pirespsps/synfo/model"
-	"github.com/shirou/gopsutil/v4/cpu"
 )
 
-func FetchData(option string, isJSON bool) (any, error) {
+func FetchData(option string) (any, error) {
 
 	//get option from main -> fetch -> parse to obj -> return
 
@@ -16,15 +15,16 @@ func FetchData(option string, isJSON bool) (any, error) {
 	case "all":
 
 	case "cpu":
-		return cpuInfo(isJSON)
+
 	case "ram":
 
 	case "storage":
+		return storageInfo()
 
 	case "process": //fazer programa separado
 
 	case "hardware":
-		return hardwareInfo(isJSON)
+		return hardwareInfo()
 
 	case "network":
 
@@ -37,32 +37,16 @@ func FetchData(option string, isJSON bool) (any, error) {
 	return nil, nil
 }
 
-func cpuInfo(isJSON bool) (any, error) {
-
-	cores, err := cpu.Counts(false)
-	if err != nil {
-		return nil, errors.New("error in core count")
-	}
-
-	used, err := cpu.Percent(1000, false)
-	if err != nil {
-		return nil, errors.New("error in percentage use")
-	}
-
-	data := struct {
-		Used  float64
-		Cores int
-	}{
-		Used:  used[0],
-		Cores: cores,
-	}
-
-	return data, nil
-}
-
-func hardwareInfo(isJson bool) (any, error) {
+func hardwareInfo() (any, error) {
 
 	//call from hardware
+
 	return model.CPUData()
 	return nil, nil
+}
+
+func storageInfo() (any, error) {
+	var storage model.Storage
+
+	return storage.Overall()
 }
