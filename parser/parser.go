@@ -42,7 +42,6 @@ func hardwareInfo() (any, error) {
 	//call from hardware
 
 	return model.CPUData()
-	return nil, nil
 }
 
 func storageInfo() (any, error) {

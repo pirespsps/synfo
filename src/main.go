@@ -36,6 +36,6 @@ func main() {
 		}
 		fmt.Print(string(js))
 	} else {
-		fmt.Print(data)
+		fmt.Printf("%+v\n", data)
 	}
 }
