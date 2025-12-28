@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/pirespsps/synfo/parser"
+	"github.com/pirespsps/synfo/utils"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 
 	var isJson bool
 
-	flag.BoolVar(&isJson, "j", false, "Set the output to JSON format")
+	flag.BoolVar(&isJson, "J", false, "Set the output to JSON format")
 
 	flag.Parse()
 
@@ -30,12 +31,14 @@ func main() {
 	}
 
 	if isJson {
+		fmt.Print("is Json!\n")
 		js, err := json.Marshal(data)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Print(string(js))
 	} else {
-		fmt.Printf("%+v\n", data)
+		fmt.Print(utils.PrintStruct(data))
+		//fmt.Printf("%+v\n", data)
 	}
 }

@@ -124,7 +124,7 @@ func diskData(dir os.DirEntry) (Disk, error) {
 	if string(isRotational) == "0" {
 		disk.Type = "SSD"
 	} else {
-		disk.Type = "HD"
+		disk.Type = "HDD"
 	}
 
 	size, err := os.ReadFile(fmt.Sprintf("/sys/block/%v/size", disk.Name))
@@ -139,7 +139,7 @@ func diskData(dir os.DirEntry) (Disk, error) {
 		return disk, fmt.Errorf("error in disk size convertion: %v", err)
 	}
 
-	disk.Size = s * 512 / 1000 //each sector has 512 bytes -> byte to KB
+	disk.Size = s * 512 / 1000 //each sector has 512 bytes -> bytes to KBs
 
 	disk.Partitions, err = partitionData(disk)
 	if err != nil {
@@ -149,7 +149,7 @@ func diskData(dir os.DirEntry) (Disk, error) {
 	var usedSpace = 0
 
 	for _, v := range disk.Partitions {
-		usedSpace += v.Size
+		usedSpace += v.Used
 	}
 
 	disk.Used = usedSpace
@@ -158,7 +158,9 @@ func diskData(dir os.DirEntry) (Disk, error) {
 }
 
 func partitionData(disk Disk) ([]Partition, error) { //just consider linux partitions
-	cmd := fmt.Sprintf(`df -T| grep %v | awk '{print $1,$2,$3,$4,$7}'`, disk.Name)
+	cmd := fmt.Sprintf(`df -kT| grep %v | awk '{print $1,$2,$3,$4,$7}'`, disk.Name)
+	//filtrar em go ao inves de awk (talvez)
+	//não usar bash -c (ver como fazer funcionar com os pipes)
 
 	data, err := exec.Command("bash", "-c", cmd).Output()
 	if err != nil {
