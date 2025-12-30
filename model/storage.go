@@ -29,24 +29,46 @@ type Partition struct {
 	MountPoint string `json:"mountpoint"`
 }
 
-func (st Storage) Overall() (any, error) {
+func (st Storage) Overall() (Response, error) {
 
-	disks, err := getStorage()
+	var r Response
+
+	ds, err := getStorage()
 	if err != nil {
-		return nil, fmt.Errorf("error in storage data: %v", err)
+		return Response{}, fmt.Errorf("error in storage data: %v", err)
 	}
 
-	data := struct {
-		Storage []Disk `json:"storage"`
-	}{
-		Storage: disks,
+	for _, v := range ds {
+		ov := struct {
+			Name           string `json:"name"`
+			Type           string `json:"type"`
+			Size           int    `json:"size"`
+			UsedPercentage int    `json:"usedPercentage"`
+		}{
+			Name:           v.Name,
+			Type:           v.Type,
+			Size:           v.Size,
+			UsedPercentage: int(float64(v.Used) / float64(v.Size) * 100),
+		}
+		r.Data = append(r.Data, ov)
 	}
 
-	return data, nil
+	return r, nil
 }
 
-func (st Storage) Extensive() (any, error) {
-	return nil, nil
+func (st Storage) Extensive() (Response, error) {
+	var r Response
+
+	ds, err := getStorage()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in storage data: %v", err)
+	}
+
+	for _, v := range ds {
+		r.Data = append(r.Data, v)
+	}
+
+	return r, nil
 }
 
 func getStorage() ([]Disk, error) {

@@ -6,11 +6,9 @@ import (
 	"github.com/pirespsps/synfo/model"
 )
 
-func FetchData(option string) (any, error) {
+func GetResponse(comp string, option string) (model.Response, error) {
 
-	//get option from main -> fetch -> parse to obj -> return
-
-	switch option {
+	switch comp {
 
 	case "all":
 
@@ -19,7 +17,7 @@ func FetchData(option string) (any, error) {
 	case "ram":
 
 	case "storage":
-		return storageInfo()
+		return storageInfo(option)
 
 	case "process": //fazer programa separado
 
@@ -31,21 +29,27 @@ func FetchData(option string) (any, error) {
 	case "system":
 
 	default:
-		return nil, errors.New("option doesnt exist")
+		return model.Response{}, errors.New("option doesnt exist")
 	}
 
-	return nil, nil
+	return model.Response{}, nil
 }
 
-func hardwareInfo() (any, error) {
+func hardwareInfo() (model.Response, error) {
 
 	//call from hardware
 
-	return model.CPUData()
+	//return model.CPUData()
+	return model.Response{}, nil
 }
 
-func storageInfo() (any, error) {
+func storageInfo(option string) (model.Response, error) {
+
 	var storage model.Storage
+
+	if option == "extensive" {
+		return storage.Extensive()
+	}
 
 	return storage.Overall()
 }

@@ -1,15 +1,24 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 
 	"github.com/pirespsps/synfo/parser"
-	"github.com/pirespsps/synfo/utils"
 )
+
+var cmds = []string{
+	"storage",
+	"cpu",
+	"ram",
+	"graphics",
+	"hardware",
+	"network",
+	"system",
+}
 
 func main() {
 	if runtime.GOOS != "linux" {
@@ -23,22 +32,34 @@ func main() {
 
 	flag.Parse()
 
-	option := os.Args[1]
+	args := flag.Args()
 
-	data, err := parser.FetchData(option)
+	if len(args) < 1 {
+		fmt.Print("missing command\n")
+		os.Exit(1)
+	}
+
+	cmd := args[0]
+	if !slices.Contains(cmds, cmd) {
+		fmt.Print("option doesn't exist\n")
+		os.Exit(1)
+	}
+
+	option := "overall" //overall,extensive,monitor
+	if len(args) > 1 {
+		option = args[1]
+	}
+
+	resp, err := parser.GetResponse(cmd, option)
 	if err != nil {
 		panic(err)
 	}
 
 	if isJson {
-		fmt.Print("is Json!\n")
-		js, err := json.Marshal(data)
-		if err != nil {
+		if err := resp.PrintJson(); err != nil {
 			panic(err)
 		}
-		fmt.Print(string(js))
 	} else {
-		fmt.Print(utils.PrintStruct(data))
-		//fmt.Printf("%+v\n", data)
+		resp.Print()
 	}
 }

@@ -9,12 +9,37 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/pirespsps/synfo/utils"
 )
 
 type Hardware interface {
-	Overall() (any, error)
-	Extensive() (any, error)
+	Overall() (Response, error)
+	Extensive() (Response, error)
 }
+
+type Response struct {
+	Data []any
+}
+
+func (r Response) Print() {
+	for _, v := range r.Data {
+		fmt.Print("\n")
+		fmt.Print(utils.PrintStruct(v))
+	}
+}
+
+func (r Response) PrintJson() error {
+	js, err := json.Marshal(r.Data)
+	if err != nil {
+		return fmt.Errorf("error in marshal:%v", err)
+	}
+
+	fmt.Print(string(js))
+	return nil
+}
+
+//muda isso tudo pra baixo de lugar
 
 type hinfo struct {
 	OS          string     `json:"os"`          //OS name
