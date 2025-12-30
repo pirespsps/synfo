@@ -6,37 +6,47 @@ import (
 	"strings"
 )
 
-func PrintStruct(st any) string {
-
-	v := reflect.ValueOf(st)
-	t := reflect.TypeOf(st)
+func PrintStruct[T any | []any](st T) string {
 
 	var data strings.Builder
 
-	if v.Kind() == reflect.Slice {
-		sli, ok := v.Interface().([]any)
-		if !ok {
-			return "error in conversion"
+	printRecursive(st, &data, 0)
+
+	return strings.TrimSpace(data.String()) + "\n"
+}
+
+func printRecursive[T any | []any](st T, data *strings.Builder, layer int) {
+	v := reflect.ValueOf(st)
+	t := reflect.TypeOf(st)
+
+	if t.Kind() == reflect.Slice {
+
+		for i := 0; i < v.Len(); i++ {
+			fmt.Fprint(data, "\n")
+			printRecursive(v.Index(i).Interface(), data, layer)
 		}
 
-		for i, v := range sli {
-			fmt.Fprintf(&data, "%v\t%v\n", i, PrintStruct(v))
-		}
+	} else {
 
+		for i := 0; i < t.NumField(); i++ {
+
+			n := t.Field(i).Name
+			val := v.Field(i)
+
+			if val.Kind() == reflect.Slice || val.Kind() == reflect.Struct {
+
+				fmt.Fprintf(data, "%v%v\n", strings.Repeat("\t", layer), n)
+
+				printRecursive(val.Interface(), data, layer+1)
+
+			} else {
+				writeLine(n, val, data, layer)
+			}
+
+		}
 	}
+}
 
-	for i := 0; i < v.NumField(); i++ {
-
-		fn := t.Field(i).Name
-		fv := v.Field(i)
-
-		if v.Kind() == reflect.Struct {
-			fmt.Fprintf(&data, "%v\t%v\n", fn, PrintStruct(fv.Interface()))
-		} else {
-			fmt.Fprintf(&data, "%v\t%v\n", fn, fv)
-		}
-
-	}
-
-	return data.String()
+func writeLine(n string, v reflect.Value, data *strings.Builder, layer int) {
+	fmt.Fprintf(data, "%v%v\t%v\n", strings.Repeat("\t", layer), n, v)
 }
