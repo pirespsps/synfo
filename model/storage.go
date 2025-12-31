@@ -33,7 +33,7 @@ func (st Storage) Overall() (Response, error) {
 
 	var r Response
 
-	ds, err := getStorage()
+	ds, err := storageData()
 	if err != nil {
 		return Response{}, fmt.Errorf("error in storage data: %v", err)
 	}
@@ -59,7 +59,7 @@ func (st Storage) Overall() (Response, error) {
 func (st Storage) Extensive() (Response, error) {
 	var r Response
 
-	ds, err := getStorage()
+	ds, err := storageData()
 	if err != nil {
 		return Response{}, fmt.Errorf("error in storage data: %v", err)
 	}
@@ -71,7 +71,7 @@ func (st Storage) Extensive() (Response, error) {
 	return r, nil
 }
 
-func getStorage() ([]Disk, error) {
+func storageData() ([]Disk, error) {
 
 	wg := sync.WaitGroup{}
 
@@ -183,6 +183,15 @@ func partitionData(disk Disk) ([]Partition, error) { //just consider linux parti
 	cmd := fmt.Sprintf(`df -kT| grep %v | awk '{print $1,$2,$3,$4,$7}'`, disk.Name)
 	//filtrar em go ao inves de awk (talvez)
 	//não usar bash -c (ver como fazer funcionar com os pipes)
+	//usar lsblk -b -o NAME,FSTYPE,SIZE,MOUNTPOINT -J | grep %v
+
+	//cmd2 := fmt.Sprintf("lsblk -b -o NAME,FSTYPE,SIZE,MOUNTPOINT -J | grep %v", disk.Name)
+	//
+	//data2, err := exec.Command(cmd2).Output()
+	//if err != nil {
+	//	return nil, fmt.Errorf("error in cmd2: %v", err)
+	//}
+	//fmt.Printf("data: %v", data2)
 
 	data, err := exec.Command("bash", "-c", cmd).Output()
 	if err != nil {

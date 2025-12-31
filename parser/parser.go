@@ -27,12 +27,18 @@ func GetResponse(comp string, option string) (model.Response, error) {
 	case "network":
 
 	case "system":
+		return systemInfo()
 
 	default:
 		return model.Response{}, errors.New("option doesnt exist")
 	}
 
 	return model.Response{}, nil
+}
+
+func systemInfo() (model.Response, error) {
+	var sys model.System
+	return sys.Overall()
 }
 
 func hardwareInfo() (model.Response, error) {

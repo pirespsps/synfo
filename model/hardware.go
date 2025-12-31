@@ -1,7 +1,6 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -23,10 +22,9 @@ type Response struct {
 }
 
 func (r Response) Print() {
-	for _, v := range r.Data {
-		fmt.Print("\n")
-		fmt.Print(utils.PrintStruct(v))
-	}
+	fmt.Print("\n")
+	fmt.Print(utils.PrintStruct(r.Data))
+	fmt.Print("\n")
 }
 
 func (r Response) PrintJson() error {
@@ -55,17 +53,6 @@ type hinfo struct {
 func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SYSFS
 	var data hinfo
 	var err error
-
-	data.OS, data.OSVersion, err = OsData()
-	if err != nil {
-		return data, fmt.Errorf("error in osData: %v", err)
-	}
-
-	data.Kernel, err = KernelName()
-	if err != nil {
-		return data, fmt.Errorf("error in kernel name: %v", err)
-	}
-
 	data.RAM, err = RAMsize()
 	if err != nil {
 		return data, fmt.Errorf("error in ram size: %v", err)
@@ -75,11 +62,6 @@ func HardwareOverall() (hinfo, error) { //interface talvez? //MUDAR TUDO PARA SY
 	if err != nil {
 		return data, fmt.Errorf("error in motherboard: %v", err)
 	}
-
-	//data.Storage, err = StorageData()
-	//if err != nil {
-	//	return data, fmt.Errorf("error in storage data: %v", err)
-	//}
 
 	data.CPU, err = CPUOverall()
 	if err != nil {
@@ -103,38 +85,6 @@ func MotherBoardName() (string, error) {
 	}
 
 	return string(data), nil
-}
-
-func OsData() (name string, release string, err error) {
-
-	data, err := os.ReadFile("/etc/os-release")
-	if err != nil {
-		return "", "", fmt.Errorf("error in reading /etc/os-release: %v", err)
-	}
-
-	rn := regexp.MustCompile(`PRETTY_NAME=`)
-	rv := regexp.MustCompile(`VERSION=`)
-
-	for v := range bytes.Lines(data) {
-		if rn.Match(v) {
-			name = string(rn.ReplaceAll(v, []byte("")))
-
-		} else if rv.Match(v) {
-			release = string(rv.ReplaceAll(v, []byte("")))
-		}
-	}
-
-	return name, release, nil
-}
-
-func KernelName() (string, error) {
-
-	name, err := exec.Command("uname", "-r").Output()
-	if err != nil {
-		return "", fmt.Errorf("error in kernel name cmd: %v", err)
-	}
-
-	return string(name), nil
 }
 
 func RAMsize() (float64, error) {

@@ -35,7 +35,7 @@ func printRecursive[T any | []any](st T, data *strings.Builder, layer int) {
 
 			if val.Kind() == reflect.Slice || val.Kind() == reflect.Struct {
 
-				fmt.Fprintf(data, "%v%v\n", strings.Repeat("\t", layer), n)
+				fmt.Fprintf(data, "%v%v:\n", strings.Repeat("\t", layer), n)
 
 				printRecursive(val.Interface(), data, layer+1)
 
@@ -48,5 +48,5 @@ func printRecursive[T any | []any](st T, data *strings.Builder, layer int) {
 }
 
 func writeLine(n string, v reflect.Value, data *strings.Builder, layer int) {
-	fmt.Fprintf(data, "%v%v\t%v\n", strings.Repeat("\t", layer), n, v)
+	fmt.Fprintf(data, "%v%v:\t%v\n", strings.Repeat("\t", layer), n, v)
 }
