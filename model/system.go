@@ -1,11 +1,9 @@
 package model
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 )
 
@@ -16,7 +14,7 @@ type SystemData struct {
 	Bios          Bios   `json:"bios"`
 	GUI           GUI    `json:"gui"`
 	KernelVersion string `json:"kernel"`
-	Graphics      string `json:"graphics"` //x11 or wayland
+	Graphics      string `json:"graphics"` //x11 or wayland(can be called xorg)
 	Architecture  string `json:"architecture"`
 	Terminal      string `json:"terminal"`
 }
@@ -47,6 +45,28 @@ func (s System) Overall() (Response, error) {
 	if err != nil {
 		return Response{}, fmt.Errorf("error in bios: %v", err)
 	}
+
+	sd.OS, err = osData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in os: %v", err)
+	}
+
+	sd.KernelVersion, err = kernelData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in kernel version: %v", err)
+	}
+
+	sd.Architecture, err = architectureData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in architecture: %v", err)
+	}
+
+	sd.GUI, err = guiData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in gui: %v", err)
+	}
+
+	sd.Graphics = graphicsData()
 
 	var r Response
 	r.Data = append(r.Data, sd)
@@ -90,26 +110,27 @@ func biosData() (Bios, error) {
 	}, nil
 }
 
-func osData() (name string, release string, err error) {
+func osData() (OS, error) {
 
 	data, err := os.ReadFile("/etc/os-release")
 	if err != nil {
-		return "", "", fmt.Errorf("error in reading /etc/os-release: %v", err)
+		return OS{}, fmt.Errorf("error in reading /etc/os-release: %v", err)
 	}
 
-	rn := regexp.MustCompile(`PRETTY_NAME=`)
-	rv := regexp.MustCompile(`VERSION=`)
+	var os OS
 
-	for v := range bytes.Lines(data) {
-		if rn.Match(v) {
-			name = string(rn.ReplaceAll(v, []byte("")))
-
-		} else if rv.Match(v) {
-			release = string(rv.ReplaceAll(v, []byte("")))
+	for v := range strings.Lines(string(data)) {
+		v = strings.TrimSpace(v)
+		if strings.Contains(v, "PRETTY_NAME=") {
+			s := strings.ReplaceAll(v, "PRETTY_NAME=", "")
+			os.Name = strings.TrimSpace(s)
+		} else if strings.Contains(v, "VERSION=") {
+			s := strings.ReplaceAll(v, "VERSION=", "")
+			os.Release = strings.TrimSpace(s)
 		}
 	}
 
-	return name, release, nil
+	return os, nil
 }
 
 func kernelData() (string, error) {
@@ -119,5 +140,28 @@ func kernelData() (string, error) {
 		return "", fmt.Errorf("error in kernel name cmd: %v", err)
 	}
 
-	return string(name), nil
+	return strings.TrimSpace(string(name)), nil
+}
+
+func architectureData() (string, error) {
+	arc, err := exec.Command("uname", "-m").Output()
+	if err != nil {
+		return "", fmt.Errorf("error in architecture: %v", arc)
+	}
+
+	return strings.TrimSpace(string(arc)), nil
+}
+
+func guiData() (GUI, error) {
+
+	desk := os.Getenv("XDG_CURRENT_DESKTOP")
+	//wm or de....
+
+	return GUI{
+		Name: strings.TrimSpace(string(desk)),
+	}, nil
+}
+
+func graphicsData() string {
+	return strings.TrimSpace(os.Getenv("XDG_SESSION_TYPE"))
 }
