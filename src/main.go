@@ -15,9 +15,9 @@ var cmds = []string{
 	"cpu",
 	"ram",
 	"graphics",
-	"hardware",
 	"network",
 	"system",
+	"all",
 }
 
 func main() {
@@ -56,8 +56,10 @@ func main() {
 	}
 
 	if isJson {
-		if err := resp.PrintJson(); err != nil {
+		if json, err := resp.Json(); err != nil {
 			panic(err)
+		} else {
+			fmt.Print(string(json))
 		}
 	} else {
 		resp.Print()

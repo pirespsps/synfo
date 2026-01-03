@@ -9,7 +9,9 @@ import (
 	"strings"
 )
 
-type System struct{}
+type System struct {
+	Data SystemData
+}
 
 var famousDEs = []string{"GNOME", "KDE Plasma", "GNOME", "Cinnamon", "Budgie", "Xfce", "LXQt", "MATE", "Pantheon", "DDE", "Cosmic"}
 
@@ -43,48 +45,80 @@ type Bios struct {
 
 func (s System) Overall() (Response, error) {
 
+	s, err := s.getData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in system data: %v", err)
+	}
+
+	systemOverall := struct {
+		User         string `json:"user"`
+		OS           OS     `json:"os"`
+		GUI          GUI    `json:"gui"`
+		Graphics     string `json:"graphics"`
+		Architecture string `json:"architecture"`
+	}{
+		User:         s.Data.User,
+		OS:           s.Data.OS,
+		GUI:          s.Data.GUI,
+		Graphics:     s.Data.Graphics,
+		Architecture: s.Data.Architecture,
+	}
+
+	var resp Response
+	resp.Data = append(resp.Data, systemOverall)
+
+	return resp, nil
+}
+
+func (s System) Extensive() (Response, error) {
+
+	s, err := s.getData()
+	if err != nil {
+		return Response{}, fmt.Errorf("error in system data: %v", err)
+	}
+
+	var r Response
+	r.Data = append(r.Data, s.Data)
+
+	return r, nil
+}
+
+func (s *System) getData() (System, error) {
 	var sd SystemData
 	var err error
 
 	sd.Bios, err = biosData()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in bios: %v", err)
+		return System{}, fmt.Errorf("error in bios: %v", err)
 	}
 
 	sd.OS, err = osData()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in os: %v", err)
+		return System{}, fmt.Errorf("error in os: %v", err)
 	}
 
 	sd.KernelVersion, err = kernelData()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in kernel version: %v", err)
+		return System{}, fmt.Errorf("error in kernel version: %v", err)
 	}
 
 	sd.Architecture, err = architectureData()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in architecture: %v", err)
+		return System{}, fmt.Errorf("error in architecture: %v", err)
 	}
 
 	sd.GUI, err = guiData()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in gui: %v", err)
+		return System{}, fmt.Errorf("error in gui: %v", err)
 	}
 
 	sd.Terminal = terminalData()
-
 	sd.Graphics = graphicsData()
 	sd.User = userData()
 
-	var r Response
-	r.Data = append(r.Data, sd)
-
-	return r, nil
-}
-
-func (s System) Extensive() (Response, error) {
-
-	return Response{}, nil
+	return System{
+		Data: sd,
+	}, nil
 }
 
 func biosData() (Bios, error) {
@@ -208,6 +242,7 @@ func terminalData() string { //improve...
 	name := strings.TrimSpace(os.Getenv("TERM"))
 
 	name = strings.Replace(name, "xterm-", "", 1)
+	name = strings.Replace(name, "xfce4-", "", 1)
 
 	return name
 }

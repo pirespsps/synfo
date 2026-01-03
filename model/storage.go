@@ -10,7 +10,9 @@ import (
 	"sync"
 )
 
-type Storage struct{}
+type Storage struct {
+	Data []Disk
+}
 
 type Disk struct {
 	Name       string      `json:"name"`
@@ -33,12 +35,12 @@ func (st Storage) Overall() (Response, error) {
 
 	var r Response
 
-	ds, err := storageData()
+	st, err := st.getData()
 	if err != nil {
 		return Response{}, fmt.Errorf("error in storage data: %v", err)
 	}
 
-	for _, v := range ds {
+	for _, v := range st.Data {
 		ov := struct {
 			Name           string `json:"name"`
 			Type           string `json:"type"`
@@ -59,25 +61,25 @@ func (st Storage) Overall() (Response, error) {
 func (st Storage) Extensive() (Response, error) {
 	var r Response
 
-	ds, err := storageData()
+	st, err := st.getData()
 	if err != nil {
 		return Response{}, fmt.Errorf("error in storage data: %v", err)
 	}
 
-	for _, v := range ds {
+	for _, v := range st.Data {
 		r.Data = append(r.Data, v)
 	}
 
 	return r, nil
 }
 
-func storageData() ([]Disk, error) {
+func (st *Storage) getData() (Storage, error) {
 
 	wg := sync.WaitGroup{}
 
 	entries, err := os.ReadDir("/sys/block/")
 	if err != nil {
-		return nil, fmt.Errorf("error in reading /sys/block: %v", err)
+		return Storage{}, fmt.Errorf("error in reading /sys/block: %v", err)
 	}
 
 	diskCh := make(chan (Disk))
@@ -116,11 +118,13 @@ func storageData() ([]Disk, error) {
 
 	for e := range errCh {
 		if e != nil {
-			return nil, fmt.Errorf("error in diskData: %v", e)
+			return Storage{}, fmt.Errorf("error in diskData: %v", e)
 		}
 	}
 
-	return disks, nil
+	return Storage{
+		Data: disks,
+	}, nil
 }
 
 func diskData(dir os.DirEntry) (Disk, error) {

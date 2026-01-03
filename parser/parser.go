@@ -21,13 +21,10 @@ func GetResponse(comp string, option string) (model.Response, error) {
 
 	case "process": //fazer programa separado
 
-	case "hardware":
-		return hardwareInfo()
-
 	case "network":
 
 	case "system":
-		return systemInfo()
+		return systemInfo(option)
 
 	default:
 		return model.Response{}, errors.New("option doesnt exist")
@@ -36,17 +33,14 @@ func GetResponse(comp string, option string) (model.Response, error) {
 	return model.Response{}, nil
 }
 
-func systemInfo() (model.Response, error) {
+func systemInfo(option string) (model.Response, error) {
 	var sys model.System
+
+	if option == "extensive" {
+		return sys.Extensive()
+	}
+
 	return sys.Overall()
-}
-
-func hardwareInfo() (model.Response, error) {
-
-	//call from hardware
-
-	//return model.CPUData()
-	return model.Response{}, nil
 }
 
 func storageInfo(option string) (model.Response, error) {
