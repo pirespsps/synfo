@@ -1,15 +1,20 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 )
 
 type System struct{}
 
+var famousDEs = []string{"GNOME", "KDE Plasma", "GNOME", "Cinnamon", "Budgie", "Xfce", "LXQt", "MATE", "Pantheon", "DDE", "Cosmic"}
+
 type SystemData struct {
+	User          string `json:"user"`
 	OS            OS     `json:"os"`
 	Bios          Bios   `json:"bios"`
 	GUI           GUI    `json:"gui"`
@@ -66,7 +71,10 @@ func (s System) Overall() (Response, error) {
 		return Response{}, fmt.Errorf("error in gui: %v", err)
 	}
 
+	sd.Terminal = terminalData()
+
 	sd.Graphics = graphicsData()
+	sd.User = userData()
 
 	var r Response
 	r.Data = append(r.Data, sd)
@@ -155,13 +163,51 @@ func architectureData() (string, error) {
 func guiData() (GUI, error) {
 
 	desk := os.Getenv("XDG_CURRENT_DESKTOP")
-	//wm or de....
+	desk = strings.TrimSpace(desk)
+
+	var isDE bool
+
+	if slices.Contains(famousDEs, desk) {
+		isDE = true
+
+	} else {
+
+		lines, err := exec.Command("pgrep", desk).Output()
+
+		if err != nil {
+			return GUI{}, fmt.Errorf("error in pgrep: %v", err)
+		}
+
+		isDE = bytes.Count(lines, []byte("\n")) > 1
+
+	}
+
+	var t string
+	if isDE {
+		t = "DE"
+	} else {
+		t = "WM"
+	}
 
 	return GUI{
-		Name: strings.TrimSpace(string(desk)),
+		Name: desk,
+		Type: t,
 	}, nil
 }
 
 func graphicsData() string {
 	return strings.TrimSpace(os.Getenv("XDG_SESSION_TYPE"))
+}
+
+func userData() string {
+	return strings.TrimSpace(os.Getenv("USER"))
+}
+
+func terminalData() string { //improve...
+
+	name := strings.TrimSpace(os.Getenv("TERM"))
+
+	name = strings.Replace(name, "xterm-", "", 1)
+
+	return name
 }
