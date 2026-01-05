@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -43,11 +44,10 @@ type Bios struct {
 	Date    string `json:"date"`
 }
 
-func (s System) Overall() (Response, error) {
+func (s *System) Overall() ([]byte, error) {
 
-	s, err := s.getData()
-	if err != nil {
-		return Response{}, fmt.Errorf("error in system data: %v", err)
+	if err := s.load(); err != nil {
+		return nil, fmt.Errorf("error in system data: %v", err)
 	}
 
 	systemOverall := struct {
@@ -64,61 +64,68 @@ func (s System) Overall() (Response, error) {
 		Architecture: s.Data.Architecture,
 	}
 
-	var resp Response
-	resp.Data = append(resp.Data, systemOverall)
-
-	return resp, nil
-}
-
-func (s System) Extensive() (Response, error) {
-
-	s, err := s.getData()
+	data, err := json.Marshal(systemOverall)
 	if err != nil {
-		return Response{}, fmt.Errorf("error in system data: %v", err)
+		return nil, fmt.Errorf("error in marshal: %v", err)
 	}
 
-	var r Response
-	r.Data = append(r.Data, s.Data)
-
-	return r, nil
+	return data, nil
 }
 
-func (s *System) getData() (System, error) {
+func (s *System) Extensive() ([]byte, error) {
+
+	if err := s.load(); err != nil {
+		return nil, fmt.Errorf("error in system data: %v", err)
+	}
+
+	data, err := json.Marshal(s.Data)
+	if err != nil {
+		return nil, fmt.Errorf("error in marshal:%v", err)
+	}
+
+	return data, nil
+}
+
+func (s *System) load() error {
+	if s == nil {
+		return fmt.Errorf("instance is nil")
+	}
+
 	var sd SystemData
 	var err error
 
 	sd.Bios, err = biosData()
 	if err != nil {
-		return System{}, fmt.Errorf("error in bios: %v", err)
+		return fmt.Errorf("error in bios: %v", err)
 	}
 
 	sd.OS, err = osData()
 	if err != nil {
-		return System{}, fmt.Errorf("error in os: %v", err)
+		return fmt.Errorf("error in os: %v", err)
 	}
 
 	sd.KernelVersion, err = kernelData()
 	if err != nil {
-		return System{}, fmt.Errorf("error in kernel version: %v", err)
+		return fmt.Errorf("error in kernel version: %v", err)
 	}
 
 	sd.Architecture, err = architectureData()
 	if err != nil {
-		return System{}, fmt.Errorf("error in architecture: %v", err)
+		return fmt.Errorf("error in architecture: %v", err)
 	}
 
 	sd.GUI, err = guiData()
 	if err != nil {
-		return System{}, fmt.Errorf("error in gui: %v", err)
+		return fmt.Errorf("error in gui: %v", err)
 	}
 
 	sd.Terminal = terminalData()
 	sd.Graphics = graphicsData()
 	sd.User = userData()
 
-	return System{
-		Data: sd,
-	}, nil
+	s.Data = sd
+
+	return nil
 }
 
 func biosData() (Bios, error) {

@@ -6,7 +6,7 @@ import (
 	"github.com/pirespsps/synfo/model"
 )
 
-func GetResponse(comp string, option string) (model.Response, error) {
+func GetResponse(comp string, option string) ([]byte, error) {
 
 	switch comp {
 
@@ -27,13 +27,13 @@ func GetResponse(comp string, option string) (model.Response, error) {
 		return systemInfo(option)
 
 	default:
-		return model.Response{}, errors.New("option doesnt exist")
+		return nil, errors.New("option doesnt exist")
 	}
 
-	return model.Response{}, nil
+	return nil, nil
 }
 
-func systemInfo(option string) (model.Response, error) {
+func systemInfo(option string) ([]byte, error) {
 	var sys model.System
 
 	if option == "extensive" {
@@ -43,7 +43,7 @@ func systemInfo(option string) (model.Response, error) {
 	return sys.Overall()
 }
 
-func storageInfo(option string) (model.Response, error) {
+func storageInfo(option string) ([]byte, error) {
 
 	var storage model.Storage
 

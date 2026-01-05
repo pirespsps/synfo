@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func PrintStruct[T any | []any](st T) string {
+func PrintStruct[T any | []any](st T) string { //arrumar para []byte....
 
 	var data strings.Builder
 

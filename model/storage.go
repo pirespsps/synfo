@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,7 +12,7 @@ import (
 )
 
 type Storage struct {
-	Data []Disk
+	Disks []Disk
 }
 
 type Disk struct {
@@ -31,16 +32,16 @@ type Partition struct {
 	MountPoint string `json:"mountpoint"`
 }
 
-func (st Storage) Overall() (Response, error) {
+func (st *Storage) Overall() ([]byte, error) {
 
-	var r Response
-
-	st, err := st.getData()
+	err := st.load()
 	if err != nil {
-		return Response{}, fmt.Errorf("error in storage data: %v", err)
+		return nil, fmt.Errorf("error in storage data: %v", err)
 	}
 
-	for _, v := range st.Data {
+	var strs []any
+
+	for _, v := range st.Disks {
 		ov := struct {
 			Name           string `json:"name"`
 			Type           string `json:"type"`
@@ -52,34 +53,42 @@ func (st Storage) Overall() (Response, error) {
 			Size:           v.Size,
 			UsedPercentage: int(float64(v.Used) / float64(v.Size) * 100),
 		}
-		r.Data = append(r.Data, ov)
+		strs = append(strs, ov)
 	}
 
-	return r, nil
-}
-
-func (st Storage) Extensive() (Response, error) {
-	var r Response
-
-	st, err := st.getData()
+	data, err := json.Marshal(strs)
 	if err != nil {
-		return Response{}, fmt.Errorf("error in storage data: %v", err)
+		return nil, fmt.Errorf("error in marshal: %v", err)
 	}
 
-	for _, v := range st.Data {
-		r.Data = append(r.Data, v)
-	}
-
-	return r, nil
+	return data, nil
 }
 
-func (st *Storage) getData() (Storage, error) {
+func (st *Storage) Extensive() ([]byte, error) {
+
+	err := st.load()
+	if err != nil {
+		return nil, fmt.Errorf("error in storage data: %v", err)
+	}
+
+	data, err := json.Marshal(st.Disks)
+	if err != nil {
+		return nil, fmt.Errorf("error in marshal:%v", err)
+	}
+
+	return data, nil
+}
+
+func (st *Storage) load() error {
+	if st == nil {
+		return fmt.Errorf("instance is nil")
+	}
 
 	wg := sync.WaitGroup{}
 
 	entries, err := os.ReadDir("/sys/block/")
 	if err != nil {
-		return Storage{}, fmt.Errorf("error in reading /sys/block: %v", err)
+		return fmt.Errorf("error in reading /sys/block: %v", err)
 	}
 
 	diskCh := make(chan (Disk))
@@ -118,13 +127,13 @@ func (st *Storage) getData() (Storage, error) {
 
 	for e := range errCh {
 		if e != nil {
-			return Storage{}, fmt.Errorf("error in diskData: %v", e)
+			return fmt.Errorf("error in diskData: %v", e)
 		}
 	}
 
-	return Storage{
-		Data: disks,
-	}, nil
+	st.Disks = disks
+
+	return nil
 }
 
 func diskData(dir os.DirEntry) (Disk, error) {

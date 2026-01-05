@@ -56,12 +56,10 @@ func main() {
 	}
 
 	if isJson {
-		if json, err := resp.Json(); err != nil {
-			panic(err)
-		} else {
-			fmt.Print(string(json))
-		}
+		fmt.Print(string(resp))
 	} else {
-		resp.Print()
+		fmt.Print(string(resp))
+		fmt.Print("\n")
+		//utils.PrintStruct(string(resp))
 	}
 }
