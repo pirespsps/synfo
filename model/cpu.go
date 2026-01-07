@@ -11,78 +11,50 @@ import (
 	"strings"
 )
 
-type CpuOverall struct {
-	Name  string            `json:"name"`         //name of the CPU
-	Cores int               `json:"cores"`        //cores count (actually threads)
-	Arch  string            `json:"architecture"` //architecture
-	Cache map[string]string `json:"cache"`        //caches sizes
+type CPU struct {
+	Data   CpuData
+	Manage CpuManageData
+}
+
+type CpuManageData struct {
+	UsagePerCent int `json:"usage"`
+	TemperatureC int `json:"temperatureC"` //temperature in Celsius
+	//etc....
 }
 
 type CpuData struct {
-	Name         string            `json:"name"`         //model
-	Producer     string            `json:"producer"`     //producer
-	Cores        []CoreData        `json:"cores"`        //data about each core
-	Threads      int               `json:"threads"`      //threads
-	Frequency    string            `json:"frequency"`    //frequency MHz
-	Arch         string            `json:"architecture"` //architecture
-	Cache        map[string]string `json:"cache"`        //total cache
-	VendorId     string            `json:"vendor"`       //vendor id
-	UsagePerCent int               `json:"usage"`        //usage percentage in the moment
-	TemperatureC int               `json:"temperatureC"` //temperature in Celsius
+	Name      string            `json:"name"` //model
+	Producer  string            `json:"producer"`
+	Cores     []CoreData        `json:"cores"`
+	Threads   int               `json:"threads"`
+	Frequency string            `json:"frequency"`
+	Arch      string            `json:"architecture"`
+	Cache     map[string]string `json:"cache"`
+	VendorId  string            `json:"vendor"`
 }
 
 type CoreData struct {
 	Id           int     `json:"coreID"`    //core id (repeat in physical and virtual)
-	Processor    int     `json:"processor"` //processor number (can't repeat)
-	FrequencyMHz float64 `json:"frequency"` //frequency in MHz
-	VendorId     string  `json:"vendor"`    //vendor id
+	Processor    int     `json:"processor"` //processor id (can't repeat)
+	FrequencyMHz float64 `json:"frequency"`
+	VendorId     string  `json:"vendor"`
 }
 
-func CPUOverall() (CpuOverall, error) { //MUDAR TUDO PARA SYSFS
+func (c *CPU) Overall() ([]byte, error) {
 
-	var o CpuOverall
-	var err error
-
-	o.Arch = getArchitecture()
-	o.Cores = getThreads()
-
-	o.Name, err = getCPUmodel()
-	if err != nil {
-		return o, fmt.Errorf("error in cpu model: %v", err)
-	}
-	o.Cache, err = getCache()
-	if err != nil {
-		return o, fmt.Errorf("error in cache: %v", err)
-	}
-
-	return o, nil
+	return nil, nil
 }
 
-func CPUData() (CpuData, error) {
+func (c *CPU) Extensive() ([]byte, error) {
 
-	var d CpuData
-	var err error
-
-	d.Cores, err = getCoreData(d.Cores)
-	if err != nil {
-		return d, fmt.Errorf("error in getting cores: %v", err)
-	}
-
-	d.Arch = getArchitecture()
-	d.Threads = getThreads()
-	d.Cache, err = getCache()
-	if err != nil {
-		return d, fmt.Errorf("error in cache: %v", err)
-	}
-	d.Name, err = getCPUmodel()
-	if err != nil {
-		return d, fmt.Errorf("error in model: %v", err)
-	}
-
-	return d, nil
+	return nil, nil
 }
 
-func getCoreData(cores []CoreData) ([]CoreData, error) {
+func (c *CPU) Load() error {
+	return nil
+}
+
+func getCoreData(cores []CoreData) ([]CoreData, error) { //mudar para sysfs
 
 	data, err := os.ReadFile("/proc/cpuinfo")
 	if err != nil {
