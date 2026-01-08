@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/pirespsps/synfo/parser"
+	"github.com/pirespsps/synfo/utils"
 )
 
 var cmds = []string{
@@ -58,8 +59,19 @@ func main() {
 	if isJson {
 		fmt.Print(string(resp))
 	} else {
-		fmt.Print(string(resp))
+
+		//var data []map[string]any //check if is array
+		//err := json.Unmarshal(resp, &data)
+		//if err != nil {
+		//	panic(err)
+		//}
+		//fmt.Print(data)
+		//fmt.Print("\n")
+		str, err := utils.PrintBytes(resp)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Print(str)
 		fmt.Print("\n")
-		//utils.PrintStruct(string(resp))
 	}
 }

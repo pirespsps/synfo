@@ -1,52 +1,61 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-func PrintStruct[T any | []any](st T) string { //arrumar para []byte....
+func PrintBytes(data []byte) (string, error) {
+	var sb strings.Builder
 
-	var data strings.Builder
+	err := bytesRecursive(&sb, data, 0)
+	if err != nil {
+		return "", fmt.Errorf("error in printing bytes: %v", err)
+	}
 
-	printRecursive(st, &data, 0)
-
-	return strings.TrimSpace(data.String()) + "\n"
+	return sb.String(), nil
 }
 
-func printRecursive[T any | []any](st T, data *strings.Builder, layer int) {
-	v := reflect.ValueOf(st)
-	t := reflect.TypeOf(st)
+func bytesRecursive(st *strings.Builder, data []byte, layer int) error {
+	var js map[string]any
 
-	if t.Kind() == reflect.Slice {
+	err := json.Unmarshal(data, &js)
+	if err != nil {
 
-		for i := 0; i < v.Len(); i++ {
-			fmt.Fprint(data, "\n")
-			printRecursive(v.Index(i).Interface(), data, layer)
+		var js []map[string]any
+		err = json.Unmarshal(data, &js)
+
+		if err != nil {
+			return fmt.Errorf("error in unmarshal: %v", err)
+
 		}
 
-	} else {
-
-		for i := 0; i < t.NumField(); i++ {
-
-			n := t.Field(i).Name
-			val := v.Field(i)
-
-			if val.Kind() == reflect.Slice || val.Kind() == reflect.Struct {
-
-				fmt.Fprintf(data, "%v%v:\n", strings.Repeat("\t", layer), n)
-
-				printRecursive(val.Interface(), data, layer+1)
-
-			} else {
-				writeLine(n, val, data, layer)
+		for i := range js {
+			bytes, err := json.Marshal(js[i])
+			if err != nil {
+				return fmt.Errorf("error in marshal: %v", err)
 			}
-
+			bytesRecursive(st, bytes, layer+1)
 		}
 	}
-}
 
-func writeLine(n string, v reflect.Value, data *strings.Builder, layer int) {
-	fmt.Fprintf(data, "%v%v:\t%v\n", strings.Repeat("\t", layer), n, v)
+	for i, v := range js {
+		t := reflect.TypeOf(v)
+		name := strings.ToUpper(string(i[0])) + string(i[1:])
+
+		if t.Kind() == reflect.Map {
+			fmt.Fprintf(st, "%v%v:\n", strings.Repeat("\t", layer), name)
+			//bytesRecursive(st, , layer+1)
+			fmt.Fprint(st, "\n")
+		} else {
+			fmt.Fprintf(st, "%v%v:\t%v\n", strings.Repeat("\t", layer), name, v)
+
+		}
+
+	}
+	fmt.Fprint(st, "\n")
+
+	return nil
 }
