@@ -46,13 +46,21 @@ func bytesRecursive(st *strings.Builder, data []byte, layer int) error {
 		name := strings.ToUpper(string(i[0])) + string(i[1:])
 
 		if t.Kind() == reflect.Map {
+
 			fmt.Fprintf(st, "%v%v:\n", strings.Repeat("\t", layer), name)
-			//bytesRecursive(st, , layer+1)
-			fmt.Fprint(st, "\n")
+
+			js, err := json.Marshal(v)
+			if err != nil {
+				return fmt.Errorf("error in marshal child:  %v", err)
+			}
+
+			bytesRecursive(st, js, layer+1)
+
 		} else {
 			fmt.Fprintf(st, "%v%v:\t%v\n", strings.Repeat("\t", layer), name, v)
 
 		}
+		//tratar se for array
 
 	}
 	fmt.Fprint(st, "\n")
