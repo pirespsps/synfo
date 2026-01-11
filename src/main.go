@@ -60,18 +60,11 @@ func main() {
 		fmt.Print(string(resp))
 	} else {
 
-		//var data []map[string]any //check if is array
-		//err := json.Unmarshal(resp, &data)
-		//if err != nil {
-		//	panic(err)
-		//}
-		//fmt.Print(data)
-		//fmt.Print("\n")
 		str, err := utils.PrintBytes(resp)
 		if err != nil {
 			panic(err)
 		}
+
 		fmt.Print(str)
-		fmt.Print("\n")
 	}
 }

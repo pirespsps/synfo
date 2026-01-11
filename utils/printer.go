@@ -45,8 +45,9 @@ func bytesRecursive(st *strings.Builder, data []byte, layer int) error {
 		t := reflect.TypeOf(v)
 		name := strings.ToUpper(string(i[0])) + string(i[1:])
 
-		if t.Kind() == reflect.Map {
+		switch t.Kind() {
 
+		case reflect.Map:
 			fmt.Fprintf(st, "%v%v:\n", strings.Repeat("\t", layer), name)
 
 			js, err := json.Marshal(v)
@@ -56,11 +57,37 @@ func bytesRecursive(st *strings.Builder, data []byte, layer int) error {
 
 			bytesRecursive(st, js, layer+1)
 
-		} else {
+		case reflect.Slice:
+			fmt.Fprintf(st, "%v%v:\n", strings.Repeat("\t", layer), name)
+
+			slice, ok := v.([]any)
+			if !ok {
+				return fmt.Errorf("error in slice convertion")
+			}
+
+			for _, val := range slice {
+
+				js, err := json.Marshal(val)
+
+				if err != nil {
+					return fmt.Errorf("error in marshal slice: %v", err)
+				}
+
+				bytesRecursive(st, js, layer+1)
+			}
+
+		case reflect.Float64:
+			f := v.(float64)
+			if f == float64(int64(f)) {
+				fmt.Fprintf(st, "%v%v:\t%d\n", strings.Repeat("\t", layer), name, int64(f))
+			} else {
+				fmt.Fprintf(st, "%v%v:\t%v\n", strings.Repeat("\t", layer), name, f)
+			}
+
+		default:
 			fmt.Fprintf(st, "%v%v:\t%v\n", strings.Repeat("\t", layer), name, v)
 
 		}
-		//tratar se for array
 
 	}
 	fmt.Fprint(st, "\n")
