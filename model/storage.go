@@ -34,8 +34,7 @@ type Partition struct {
 
 func (st *Storage) Overall() ([]byte, error) {
 
-	err := st.load()
-	if err != nil {
+	if err := st.load(); err != nil {
 		return nil, fmt.Errorf("error in storage data: %v", err)
 	}
 
@@ -66,8 +65,7 @@ func (st *Storage) Overall() ([]byte, error) {
 
 func (st *Storage) Extensive() ([]byte, error) {
 
-	err := st.load()
-	if err != nil {
+	if err := st.load(); err != nil {
 		return nil, fmt.Errorf("error in storage data: %v", err)
 	}
 
