@@ -16,6 +16,11 @@ type RAMData struct {
 	FrequencyMHz int     `json:"frequencyMHz"`
 }
 
+//func (r *RAM) Monitore() ([]byte,error){
+//	cat /proc/meminfo
+//	return nil,nil
+//}
+
 func (r *RAM) Overall() ([]byte, error) {
 	if err := r.load(); err != nil {
 		return nil, fmt.Errorf("error in load:%v", err)

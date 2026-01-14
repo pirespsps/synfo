@@ -13,6 +13,7 @@ func GetResponse(comp string, option string) ([]byte, error) {
 	case "all":
 
 	case "cpu":
+		return cpuInfo(option)
 
 	case "ram":
 
@@ -31,6 +32,16 @@ func GetResponse(comp string, option string) ([]byte, error) {
 	}
 
 	return nil, nil
+}
+
+func cpuInfo(option string) ([]byte, error) {
+	var cpu model.CPU
+
+	if option == "extensive" {
+		return cpu.Extensive()
+	}
+
+	return cpu.Overall()
 }
 
 func systemInfo(option string) ([]byte, error) {

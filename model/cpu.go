@@ -2,6 +2,8 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -41,25 +43,59 @@ type CoreData struct {
 }
 
 func (c *CPU) Overall() ([]byte, error) {
+	if err := c.Load(); err != nil {
+		return nil, fmt.Errorf("error in load: %v", err)
+	}
 
-	return nil, nil
+	bt, err := json.Marshal(c.Data)
+	if err != nil {
+		return nil, fmt.Errorf("error marsheling: %v", err)
+	}
+
+	return bt, nil
 }
 
 func (c *CPU) Extensive() ([]byte, error) {
-
+	if err := c.Load(); err != nil {
+		return nil, fmt.Errorf("error in load: %v", err)
+	}
 	return nil, nil
 }
 
 func (c *CPU) Load() error {
+	if c == nil {
+		return errors.New("instance is nil")
+	}
+	var err error
+
+	c.Data.Arch = getArchitecture()
+	c.Data.Threads = getThreads()
+	c.Data.Name, err = getCPUmodel()
+	if err != nil {
+		return fmt.Errorf("error in cpu model: %v", err)
+	}
+
+	c.Data.Cores, err = getCoreData()
+	if err != nil {
+		return fmt.Errorf("error in cores: %v", err)
+	}
+
+	c.Data.Cache, err = getCache()
+	if err != nil {
+		return fmt.Errorf("error in cache: %v", err)
+	}
+
 	return nil
 }
 
-func getCoreData(cores []CoreData) ([]CoreData, error) { //mudar para sysfs
+func getCoreData() ([]CoreData, error) {
 
 	data, err := os.ReadFile("/proc/cpuinfo")
 	if err != nil {
 		return nil, fmt.Errorf("error in reading /proc/cpuinfo: %v", err)
 	}
+
+	var cores []CoreData
 
 	core := CoreData{}
 

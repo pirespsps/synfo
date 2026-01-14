@@ -45,6 +45,11 @@ func bytesRecursive(st *strings.Builder, data []byte, layer int) error {
 		t := reflect.TypeOf(v)
 		name := strings.ToUpper(string(i[0])) + string(i[1:])
 
+		if t == nil {
+			fmt.Fprintf(st, "%v%v:\tundefined\n", strings.Repeat("\t", layer), name)
+			continue
+		}
+
 		switch t.Kind() {
 
 		case reflect.Map:
