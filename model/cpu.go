@@ -85,6 +85,16 @@ func (c *CPU) Load() error {
 		return fmt.Errorf("error in cache: %v", err)
 	}
 
+	c.Data.Frequency, err = getFrequency()
+	if err != nil {
+		return fmt.Errorf("error in frequency: %v", err)
+	}
+
+	c.Data.VendorId, err = getVendor()
+	if err != nil {
+		return fmt.Errorf("error in vendor: %v", err)
+	}
+
 	return nil
 }
 
@@ -189,4 +199,44 @@ func getThreads() int {
 
 func getArchitecture() string {
 	return runtime.GOARCH
+}
+
+func getFrequency() (string, error) {
+	data, err := os.ReadFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
+	if err != nil {
+		return "", fmt.Errorf("error in reading file: %v", err)
+	}
+
+	data = bytes.TrimSpace(data)
+
+	freq, err := strconv.ParseFloat(string(data), 64)
+	if err != nil {
+		return "", fmt.Errorf("error in converting to int: %v", err)
+	}
+
+	freq = freq / 1000_000 //kb to gb
+
+	freqS := fmt.Sprintf("%.1f GHz", freq)
+
+	return freqS, nil
+}
+
+func getVendor() (string, error) {
+
+	data, err := os.ReadFile("/proc/cpuinfo")
+	if err != nil {
+		return "", fmt.Errorf("error opening file: %v", err)
+	}
+
+	for line := range strings.Lines(string(data)) {
+		if strings.Contains(line, "vendor_id") {
+			str := strings.ReplaceAll(line, "vendor_id", "")
+			str = strings.ReplaceAll(str, ":", "")
+			str = strings.TrimSpace(str)
+
+			return str, nil
+		}
+	}
+
+	return "", errors.New("vendor not found")
 }
