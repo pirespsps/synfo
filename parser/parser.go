@@ -39,6 +39,8 @@ func cpuInfo(option string) ([]byte, error) {
 
 	if option == "extensive" {
 		return cpu.Extensive()
+	} else if option == "moderate" {
+		//
 	}
 
 	return cpu.Overall()

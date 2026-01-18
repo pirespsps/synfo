@@ -26,7 +26,6 @@ type CpuManageData struct {
 
 type CpuData struct {
 	Name      string            `json:"name"` //model
-	Producer  string            `json:"producer"`
 	Cores     []CoreData        `json:"cores"`
 	Threads   int               `json:"threads"`
 	Frequency string            `json:"frequency"`
@@ -47,7 +46,21 @@ func (c *CPU) Overall() ([]byte, error) {
 		return nil, fmt.Errorf("error in load: %v", err)
 	}
 
-	bt, err := json.Marshal(c.Data)
+	overall := struct {
+		Name         string `json:"name"`
+		Frequency    string `json:"frequency"`
+		Cores        int    `json:"cores"`
+		Vendor       string `json:"vendor"`
+		Architecture string `json:"architecture"`
+	}{
+		Name:         c.Data.Name,
+		Frequency:    c.Data.Frequency,
+		Cores:        len(c.Data.Cores),
+		Vendor:       c.Data.VendorId,
+		Architecture: c.Data.Arch,
+	}
+
+	bt, err := json.Marshal(overall)
 	if err != nil {
 		return nil, fmt.Errorf("error marsheling: %v", err)
 	}
@@ -59,7 +72,14 @@ func (c *CPU) Extensive() ([]byte, error) {
 	if err := c.Load(); err != nil {
 		return nil, fmt.Errorf("error in load: %v", err)
 	}
-	return nil, nil
+
+	bt, err := json.Marshal(c.Data)
+	if err != nil {
+		return nil, fmt.Errorf("error in marsheling: %v", err)
+	}
+
+	return bt, nil
+
 }
 
 func (c *CPU) Load() error {
@@ -169,6 +189,7 @@ func getCPUmodel() (string, error) {
 	for v := range bytes.Lines(data) {
 		if r.Match([]byte(v)) {
 			model = string(r.ReplaceAll([]byte(v), []byte("")))
+			model = strings.TrimSpace(model)
 			break
 		}
 	}
