@@ -23,6 +23,7 @@ func GetResponse(comp string, option string) ([]byte, error) {
 	case "process": //fazer programa separado
 
 	case "network":
+		return networkInfo(option)
 
 	case "system":
 		return systemInfo(option)
@@ -32,6 +33,18 @@ func GetResponse(comp string, option string) ([]byte, error) {
 	}
 
 	return nil, nil
+}
+
+func networkInfo(option string) ([]byte, error) {
+	var net model.Network
+
+	if option == "extensive" {
+		return net.Extensive()
+	} else if option == "moderate" {
+		//
+	}
+
+	return net.Overall()
 }
 
 func cpuInfo(option string) ([]byte, error) {
